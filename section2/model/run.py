@@ -11,7 +11,7 @@ def locate_stations(tmja, ald, p, R):
     visualize_network(cn1)
     cn1.nodes.data
 
-    return cn1
+    return cn1, x, y
 
 
 def station_info(cn1):
