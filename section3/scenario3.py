@@ -96,9 +96,9 @@ class Scenario3():
             }
             # dictionary with the expected size of station by node
             h2station_nodes = {
-                node: 1 * (h2day >= 1000 and h2day <= 1800)
-                + 2 * (h2day > 1800 and h2day <= 2800)
-                + 3 * (h2day > 2800)
+                node: 1 * (h2day >= 900 and h2day <= 1600)
+                + 2 * (h2day > 1600 and h2day <= 2400)
+                + 3 * (h2day > 2400)
                 for (node, h2day) in h2day_demand_nodes.items()
             }
             h2station_nodes = {k: v for k, v in h2station_nodes.items() if v != 0}
