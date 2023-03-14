@@ -1,7 +1,7 @@
 import networkx as nx
 from section2.graph.construct_network import construct_network
 from section2.model.FRLM import FRLM
-from section2.utils.visualization import visualize_network
+from utils.visualization import visualize_network
 
 def locate_stations(tmja, ald, p, R):
     cn1 = construct_network(tmja, ald)

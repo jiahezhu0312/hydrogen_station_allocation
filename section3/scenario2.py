@@ -4,7 +4,7 @@ import pandas as pd
 
 import random
 
-from section3.utils.visualization import visualize_network_scenario2
+from utils.visualization import visualize_network_scenario2
 
 flux_to_refueling = 0.008
 percentage_of_hydrogen_truck = 0.1

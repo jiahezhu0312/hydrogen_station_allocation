@@ -4,7 +4,6 @@ from tqdm.auto import tqdm
 
 def FRLM(cn, p=10,  R = 400000 ):
     """Linear programming sample."""
-
    
     # p = 150 # number of refuel point
 

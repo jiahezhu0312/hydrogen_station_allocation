@@ -3,7 +3,7 @@ import networkx as nx
 import geopandas as gpd
 from shapely.geometry import Point
 
-from section2.utils.visualization import visualize_network
+from utils.visualization import visualize_network
 from section2.preprocessing.region import add_region, filter_on_region
 from section2.preprocessing.cluster_points import cluster_nodes, cluster_nodes_ald
 
