@@ -6,8 +6,9 @@ from copy import copy
 from collections import Counter, defaultdict
 from utils.visualization import visualize_network_with_stations_size
 from utils.summary_statistics import phase_summary, print_table
-flux_to_refueling = 0.001
-fuel_by_refueling = 30  # kg
+
+flux_to_refueling = 0.0012
+fuel_by_refueling = 32  # kg
 
 
 def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
@@ -15,7 +16,7 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
     res_size = dict()
     res_h2day = dict()
     res_profit = dict()
-    percentage_of_hydrogen_truck_list = [0.05, 0.1, 0.16, 0.267]
+    percentage_of_hydrogen_truck_list = [0.04, 0.09, 0.168, 0.24]
     demand_treshold = [150000, 370000, 7500000, 1100000]
     cur_demand_sum = 0
     base_year = 2025
@@ -40,8 +41,8 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
         }
         h2station_all_nodes = {
             node: 1 * (h2day >= 1000 and h2day <= 1800)
-            + 2 * (h2day > 1800 and h2day <= 2800)
-            + 3 * (h2day > 2800)
+            + 2 * (h2day > 1800 and h2day <= 3000)
+            + 3 * (h2day > 3000)
             for (node, h2day) in h2day_demand_all_nodes.items()
         }
         h2day_all_nodes = {
@@ -74,9 +75,9 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
         }
         # dictionary with the expected size of station by node
         h2station_nodes = {
-            node: 1 * (h2day >= 900 and h2day <= 1780)
-            + 2 * (h2day > 1780 and h2day <= 2999)
-            + 3 * (h2day > 2999)
+            node: 1 * (h2day >= 1000 and h2day <= 1800)
+            + 2 * (h2day > 1800 and h2day <= 3000)
+            + 3 * (h2day > 3000)
             for (node, h2day) in h2day_demand_nodes.items()
         }
         h2station_nodes = {k: v for k, v in h2station_nodes.items() if v != 0}
