@@ -2,9 +2,10 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from copy import copy
 from collections import Counter, defaultdict
 from utils.visualization import visualize_network_with_stations_size
-
+from utils.summary_statistics import phase_summary, print_table
 flux_to_refueling = 0.001
 fuel_by_refueling = 30  # kg
 
@@ -17,6 +18,9 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
     percentage_of_hydrogen_truck_list = [0.05, 0.1, 0.16, 0.267]
     demand_treshold = [150000, 370000, 7500000, 1100000]
     cur_demand_sum = 0
+    base_year = 2025
+    station_size_all_phase = []
+    summary = []
     for i, percentage_of_hydrogen_truck in enumerate(percentage_of_hydrogen_truck_list):
         if i >= timesteps:
             break
@@ -123,15 +127,35 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
         nx.set_node_attributes(cn1, 0, "S3P1_h2day_demand")
         nx.set_node_attributes(cn1, h2day_demand_all_nodes, "S3P1_h2day_demand")
         nx.set_node_attributes(cn1, x, "is_Station")
+
         if visualization:
             visualize_network_with_stations_size(cn1, 'S3P1_')
         if metrics:
             scenario_1_metrics(cn1)
+        
+        station_size_all_phase.append(dict(cn1.nodes(data='S3P1_station_size')))
+        summary.append(call_phase_summary(cn1, station_size_all_phase, base_year + i * 5), )
+    print_table(summary)   
 
     #do scenario in the for loop + demand decrease in size with time
     #question on scaling for the last date ?
         
-        
+def call_phase_summary(cn, station_size_all_phase, phase):
+    station_size = dict(cn.nodes(data='S3P1_station_size'))
+    market_demand = dict(cn.nodes(data='S3P1_h2day_demand'))
+    fulfilled_demand = dict(cn.nodes(data='S3P1_h2day'))
+    profit_ton = dict(cn.nodes(data='S3P1_kg_profit'))
+    operation_rate = 0.96   
+    
+    return [phase] +phase_summary(
+                                station_size,
+                                market_demand,
+                                fulfilled_demand,
+                                profit_ton,
+                                operation_rate,
+                                station_size_all_phase,
+
+                            )    
 
 def scenario_1_metrics(roads):
     station_size = dict(roads.nodes(data="S3P1_station_size"))
