@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
 from utils.visualization import visualize_network_with_stations_size
 
-flux_to_refueling = 0.003
-fuel_by_refueling = 45  # kg
+flux_to_refueling = 0.001
+fuel_by_refueling = 30  # kg
 
 
 def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
@@ -15,12 +15,11 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
     res_h2day = dict()
     res_profit = dict()
     percentage_of_hydrogen_truck_list = [0.05, 0.1, 0.16, 0.267]
-    demand_treshold = [200000, 500000, 900000, 1500000]
+    demand_treshold = [150000, 370000, 7500000, 1100000]
     cur_demand_sum = 0
     for i, percentage_of_hydrogen_truck in enumerate(percentage_of_hydrogen_truck_list):
         if i >= timesteps:
             break
-        nx.set_node_attributes(cn1, w_x, "is_Station")
         flux_by_station = {
             node: cn1.degree(node, weight="traffic flow")
             / np.ceil(cn1.degree(node) / 2)
@@ -105,23 +104,24 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
             res_size[best_node] = h2station_nodes[best_node]
             res_h2day[best_node] = h2day_nodes[best_node]
             res_profit[best_node] = h2profit_nodes[best_node]
-            cur_demand_sum += h2profit_nodes[best_node]
+            cur_demand_sum += h2day_nodes[best_node]
             df_dist = (
                 (df_coor.x - df_coor.loc[best_node, "x"]) ** 2
                 + (df_coor.y - df_coor.loc[best_node, "y"]) ** 2
             ).pow(0.5)
-            df_nearest = df_dist[df_dist <= 20000].index.values
+            df_nearest = df_dist[df_dist <= 15000].index.values
             for key in df_nearest:
                 w_x.pop(key, None)
                 h2profit_nodes.pop(key, None)
             # remove neighbors from x and h2profit_nodes
-
         nx.set_node_attributes(cn1, 0, "S3P1_station_size")
         nx.set_node_attributes(cn1, res_size, "S3P1_station_size")
         nx.set_node_attributes(cn1, 0, "S3P1_h2day")
         nx.set_node_attributes(cn1, res_h2day, "S3P1_h2day")
-        nx.set_node_attributes(cn1, 0, "S3P1_kg_profits")
+        nx.set_node_attributes(cn1, 0, "S3P1_kg_profit")
         nx.set_node_attributes(cn1, res_profit, "S3P1_kg_profit")
+        nx.set_node_attributes(cn1, 0, "S3P1_h2day_demand")
+        nx.set_node_attributes(cn1, h2day_demand_all_nodes, "S3P1_h2day_demand")
         nx.set_node_attributes(cn1, x, "is_Station")
         if visualization:
             visualize_network_with_stations_size(cn1, 'S3P1_')
@@ -143,9 +143,9 @@ def scenario_1_metrics(roads):
     kg_profit = dict(roads.nodes(data="S3P1_kg_profit"))
     kg_profit = filter(lambda item: item is not None, kg_profit.values())
     print(f"Number of tons sold in profit in our network: {sum(kg_profit) / 1000}")
-    #h2day_demand = dict(roads.nodes(data="h2day_demand"))
-    #h2day_demand = list(filter(lambda item: item is not None, h2day_demand.values()))
-    #print(f"total estimated demand in our network: {sum(h2day_demand) / 1000}")
+    h2day_demand = dict(roads.nodes(data="S3P1_h2day_demand"))
+    h2day_demand = list(filter(lambda item: item is not None, h2day_demand.values()))
+    print(f"total estimated demand in our network: {sum(h2day_demand) / 1000}")
     fig, axs = plt.subplots((3), figsize=(16, 16))
     ax = axs[0]
     ax.hist([x for x in h2day if x > 0])
@@ -156,8 +156,8 @@ def scenario_1_metrics(roads):
     region_nodes = dict(roads.nodes(data="region_name"))
     ax = axs[1]
     size_list = ["small", "medium", "large"]
-    station_size_dict = {size_list[i-1]: c for (i,c) in counter.items() if i!=0}
-    ax.bar(*zip(*station_size_dict.items()))
+    size_values = [counter[1], counter[2], counter[3]]
+    ax.bar(size_list, size_values)
     ax.set_ylabel("Number of stations")
     ax.set_xlabel("Station size")
     fig.tight_layout()
@@ -169,7 +169,3 @@ def scenario_1_metrics(roads):
     ax.set_ylabel("Number of stations")
     ax.tick_params(axis='x', rotation=45)
     fig.tight_layout()
-    
-    
-        
-
