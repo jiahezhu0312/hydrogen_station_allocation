@@ -69,7 +69,6 @@ def visualize_network_with_stations(roads):
         pos=cluster_centers,
         **options,
     )
-    
     plt.show()
 def visualize_network_scenario2(roads):
     edges, weights = zip(*nx.get_edge_attributes(roads, "traffic flow").items())
