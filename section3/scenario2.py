@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import pandas as pd
+import random
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
 from utils.visualization import visualize_scenario2
@@ -111,6 +112,7 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
             res_size[best_node] = h2station_nodes[best_node]
             res_h2day[best_node] = h2day_nodes[best_node]
             res_profit[best_node] = h2profit_nodes[best_node]
+            res_airliquide[best_node] = (random.random() < 0.5)
             cur_demand_sum += h2day_nodes[best_node]
             df_dist = (
                 (df_coor.x - df_coor.loc[best_node, "x"]) ** 2
