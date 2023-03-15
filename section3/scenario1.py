@@ -143,18 +143,16 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
         
 def call_phase_summary(cn, station_size_all_phase, phase):
     station_size = dict(cn.nodes(data='S3P1_station_size'))
-    market_demand = dict(cn.nodes(data='S3P1_h2day_demand'))
     fulfilled_demand = dict(cn.nodes(data='S3P1_h2day'))
     profit_ton = dict(cn.nodes(data='S3P1_kg_profit'))
-    operation_rate = 0.96   
-    
-    return [phase] +phase_summary(
+    operation_rate = 0.97 
+    return phase_summary(
                                 station_size,
-                                market_demand,
                                 fulfilled_demand,
                                 profit_ton,
                                 operation_rate,
                                 station_size_all_phase,
+                                phase
 
                             )    
 

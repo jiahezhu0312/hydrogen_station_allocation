@@ -9,7 +9,7 @@ def print_table(d):
     print (tabulate(d, headers=header))
 
 
-def phase_summary(station_size, market_demand, fulfilled_demand, profit_ton, operation_rate, station_size_all_phase):
+def phase_summary(station_size, fulfilled_demand, profit_ton, operation_rate, station_size_all_phase, phase):
     """ Computes summary statistics at each phase.
     
     Inputs:
@@ -26,15 +26,20 @@ def phase_summary(station_size, market_demand, fulfilled_demand, profit_ton, ope
 
     """
     ns, s, m, l = n_stations(station_size)
-    ds = demand_satisfied_per(market_demand, fulfilled_demand)
+    ds = demand_satisfied_per( fulfilled_demand, phase)
     yp = profit_ton_year(profit_ton, operation_rate) / 1e6
     capex, opex = cost(station_size_all_phase)
-    s, m, l, ds, yp=  100 * round(s, 3), 100 *round(m, 3),  100 *round(l, 3),  100 *round(ds, 3), round(yp, 3)
-    return [ns, s, m, l, ds, yp,  capex, opex]
+    s, m, l,  yp=  100 * round(s, 3), 100 *round(m, 3),  100 *round(l, 3),  round(yp, 3)
+    if phase in [2025, 2035]:
+        return [phase, ns, s, m, l, ds, yp,  capex, opex]
+    else:
+        print(phase, ds)
+        ds = 100 *round(ds, 3)
+        return [phase, ns, s, m, l, ds, yp,  capex, opex]
 
 
 # ===========================================================================
-def cost(station_size_all_phase):
+def cost(station_size_all_phase ):
     """ Compute the construction cost and operation cost at the last phase.
     Inputs:
     station_size_all_phase (List[Dict]) = Deployement plan at each phase
@@ -77,7 +82,7 @@ def n_stations(station_size):
 
 
 
-def demand_satisfied_per(market, our):
+def demand_satisfied_per(our, phase):
     """ Compute the percentage of demand in t/day satisfied by our deployement strategy.
     Input:
     market (dict): dictionary containing market demand per node
@@ -87,10 +92,15 @@ def demand_satisfied_per(market, our):
         value = demand in ton/day
     
     """
-
-    total_market = sum(list(market.values()))
-    total_our = sum(list(our.values()))
-    return total_our / total_market
+    total_our = sum(list(our.values()))/1000
+    
+    if phase == 2025 or phase == 2035:
+        print(phase)
+        return 'not defined'
+    elif phase == 2030:
+        return total_our / 384
+    else:
+        return total_our / 1559
 
 def profit_ton_year(profit_ton, operation_rate):
     """ Compute the profit per year in ton based on operation rate.
