@@ -6,6 +6,9 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import networkx as nx
+from utils.summary_statistics import phase_summary, print_table
+from utils.output_dataframe import df_phase
+
 class Scenario3():
     def __init__(self, data_path, cn, x) -> None:
 
@@ -24,20 +27,23 @@ class Scenario3():
     
         self.rival_stations = dict(self.graph.nodes(data='S3P3_rival_station'))
 
-    def define_station_size(self, cn1, x, timesteps=3):
-        flux_to_refueling = 0.003
-        fuel_by_refueling = 45  # kg
+    def define_station_size(self, cn1, x, timesteps=4):
+        flux_to_refueling = 0.0012
+        fuel_by_refueling = 32
+        base_year = 2025# k
         w_x = x.copy()
         res_size = dict()
         res_h2day = dict()
         res_profit = dict()
-        percentage_of_hydrogen_truck_list = [0.05, 0.1, 0.16, 0.267]
-        demand_treshold = [200000, 500000, 900000, 1500000]
+        percentage_of_hydrogen_truck_list = [0.04, 0.09, 0.168, 0.24]
+        demand_treshold = [150000, 370000, 7500000, 1100000]
+        station_size_all_phase = []
+        summary = []
+        df_all_phase = []
         cur_demand_sum = 0
         for i, percentage_of_hydrogen_truck in enumerate(percentage_of_hydrogen_truck_list):
             if i >= timesteps:
                 break
-            nx.set_node_attributes(cn1, w_x, "is_Station")
             flux_by_station = {
                 node: cn1.degree(node, weight="traffic flow")
                 / np.ceil(cn1.degree(node) / 2)
@@ -49,13 +55,13 @@ class Scenario3():
                 * flux_by_station[node]
                 * flux_to_refueling
                 * percentage_of_hydrogen_truck
-                * fuel_by_refueling / (1+self.conversion_planned[node])
+                * fuel_by_refueling / (1 + self.conversion_planned[node] + 0.5 * sum(self.conversion_planned[nei] for nei in cn1.neighbors(node)))
                 for (node, x_val) in x.items()
             }
             h2station_all_nodes = {
                 node: 1 * (h2day >= 1000 and h2day <= 1800)
-                + 2 * (h2day > 1800 and h2day <= 2800)
-                + 3 * (h2day > 2800)
+                + 2 * (h2day > 1800 and h2day <= 3000)
+                + 3 * (h2day > 3000)
                 for (node, h2day) in h2day_demand_all_nodes.items()
             }
             h2day_all_nodes = {
@@ -76,29 +82,21 @@ class Scenario3():
                 res_h2day[node] = h2day_all_nodes[node]
                 res_profit[node] = h2profit_all_nodes[node]
                 cur_demand_sum += res_h2day[node]
-            
-            
-            h2day_demand_nodes_market = {
-                node: x_val
-                * flux_by_station[node]
-                * flux_to_refueling
-                * percentage_of_hydrogen_truck
-                * fuel_by_refueling
-                for (node, x_val) in w_x.items()
-            }
+
+
             h2day_demand_nodes = {
                 node: x_val
                 * flux_by_station[node]
                 * flux_to_refueling
                 * percentage_of_hydrogen_truck
-                * fuel_by_refueling / (1+self.conversion_planned[node])
+                * fuel_by_refueling / (1 + self.conversion_planned[node] + 0.5 * sum(self.conversion_planned[nei] for nei in cn1.neighbors(node)))
                 for (node, x_val) in w_x.items()
             }
             # dictionary with the expected size of station by node
             h2station_nodes = {
-                node: 1 * (h2day >= 900 and h2day <= 1600)
-                + 2 * (h2day > 1600 and h2day <= 2400)
-                + 3 * (h2day > 2400)
+                node: 1 * (h2day >= 1000 and h2day <= 1800)
+                + 2 * (h2day > 1800 and h2day <= 3000)
+                + 3 * (h2day > 3000)
                 for (node, h2day) in h2day_demand_nodes.items()
             }
             h2station_nodes = {k: v for k, v in h2station_nodes.items() if v != 0}
@@ -121,7 +119,6 @@ class Scenario3():
                 columns=["x", "y"],
             )
             while cur_demand_sum < demand_treshold[i] and len(h2profit_nodes.values()):
-                
                 max_profit = max(h2profit_nodes.values())
                 best_node = [
                     node
@@ -131,27 +128,47 @@ class Scenario3():
                 res_size[best_node] = h2station_nodes[best_node]
                 res_h2day[best_node] = h2day_nodes[best_node]
                 res_profit[best_node] = h2profit_nodes[best_node]
-                cur_demand_sum += h2profit_nodes[best_node]
+                cur_demand_sum += h2day_nodes[best_node]
                 df_dist = (
                     (df_coor.x - df_coor.loc[best_node, "x"]) ** 2
                     + (df_coor.y - df_coor.loc[best_node, "y"]) ** 2
                 ).pow(0.5)
-                df_nearest = df_dist[df_dist <= 20000].index.values
+                df_nearest = df_dist[df_dist <= 15000].index.values
                 for key in df_nearest:
                     w_x.pop(key, None)
                     h2profit_nodes.pop(key, None)
-                # remove neighbors from x and h2profit_nodes
                 # remove neighbors from x and h2profit_nodes
             nx.set_node_attributes(cn1, 0, "S3P3_station_size")
             nx.set_node_attributes(cn1, res_size, "S3P3_station_size")
             nx.set_node_attributes(cn1, 0, "S3P3_h2day")
             nx.set_node_attributes(cn1, res_h2day, "S3P3_h2day")
-            nx.set_node_attributes(cn1, 0, "S3P3_kg_profits")
+            nx.set_node_attributes(cn1, 0, "S3P3_kg_profit")
             nx.set_node_attributes(cn1, res_profit, "S3P3_kg_profit")
-            # nx.set_node_attributes(cn1, 0, "S3P3_h2day_demand")
-            # nx.set_node_attributes(cn1, h2day_demand_nodes, "S3P3_h2day_demand")
-            # nx.set_node_attributes(cn1, 0, "S3P3_h2day_demand_market")
-            # nx.set_node_attributes(cn1, h2day_demand_nodes_market, "S3P3_h2day_demand_market")
+            nx.set_node_attributes(cn1, 0, "S3P3_h2day_demand")
+            nx.set_node_attributes(cn1, h2day_demand_all_nodes, "S3P3_h2day_demand")
+            nx.set_node_attributes(cn1, x, "is_Station")
+            station_size_all_phase.append(dict(cn1.nodes(data='S3P3_station_size')))
+            summary.append(self.call_phase_summary(cn1, station_size_all_phase, base_year + i * 5), )
+            df_all_phase.append(df_phase(cn1, 'S3P3'))
+        print_table(summary)   
+        return df_all_phase
+    
+    
+    def call_phase_summary(self, cn, station_size_all_phase, phase):
+        station_size = dict(cn.nodes(data='S3P3_station_size'))
+        fulfilled_demand = dict(cn.nodes(data='S3P3_h2day'))
+        profit_ton = dict(cn.nodes(data='S3P3_kg_profit'))
+        operation_rate = 0.97
+        return phase_summary(
+                                    station_size,
+                                    fulfilled_demand,
+                                    profit_ton,
+                                    operation_rate,
+                                    station_size_all_phase,
+                                    phase
+
+                                )
+
 
     def summary(self):
         station_size = dict(self.graph.nodes(data="S3P3_station_size"))
@@ -200,7 +217,7 @@ class Scenario3():
             offset = width * multiplier
             
             rects = ax.bar(x + offset, measurement, width, label=attribute)
-            ax.bar_label(rects)
+            #ax.bar_label(rects)
             multiplier += 1
         ax.set_xticks(x + width, regions)
         ax.legend(loc='upper left')
@@ -216,7 +233,7 @@ class Scenario3():
         rects = ax.bar(*zip(*stations_by_region.items()))
         ax.set_ylabel("Number of stations")
         ax.tick_params(axis='x', rotation=45)
-        ax.bar_label(rects)
+        #ax.bar_label(rects)
 
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16, 16))
 
@@ -317,7 +334,7 @@ class Scenario3():
 
         is_station = {i: 0 for i, P in dict(cn.nodes(data='coordinates')).items()}
         for ele in existent_stations.Coordinates_point:
-            if pr_point.distance(ele).min() <= 4000:
+            if pr_point.distance(ele).min() <= 10000:
                 n = pr_point.distance(ele).argmin()
                 is_station[n] += 1
             
@@ -330,5 +347,3 @@ class Scenario3():
             if cn.nodes[n]['S3P3_conversion_planned'] == 1 and cn.nodes[n]['S3P3_station_size'] > 0:
                 rival[n] = 1
         return rival
-
-
