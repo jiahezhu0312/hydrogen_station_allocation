@@ -33,7 +33,6 @@ def phase_summary(station_size, fulfilled_demand, profit_ton, operation_rate, st
     if phase in [2025, 2035]:
         return [phase, ns, s, m, l, ds, yp,  capex, opex]
     else:
-        print(phase, ds)
         ds = 100 *round(ds, 3)
         return [phase, ns, s, m, l, ds, yp,  capex, opex]
 
@@ -95,7 +94,6 @@ def demand_satisfied_per(our, phase):
     total_our = sum(list(our.values()))/1000
     
     if phase == 2025 or phase == 2035:
-        print(phase)
         return 'not defined'
     elif phase == 2030:
         return total_our / 384
