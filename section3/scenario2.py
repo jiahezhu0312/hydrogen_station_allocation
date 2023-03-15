@@ -36,9 +36,9 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
             for (node, x_val) in x.items()
         }
         h2station_all_nodes = {
-            node: 1 * (h2day >= 1000 and h2day <= 1800)
-            + 2 * (h2day > 1800 and h2day <= 3000)
-            + 3 * (h2day > 3000)
+            node: 1 * (h2day >= 900 and h2day <= 1600)
+            + 2 * (h2day > 1600 and h2day <= 2400)
+            + 3 * (h2day > 2400)
             for (node, h2day) in h2day_demand_all_nodes.items()
         }
         h2day_all_nodes = {
@@ -71,9 +71,9 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
         }
         # dictionary with the expected size of station by node
         h2station_nodes = {
-            node: 1 * (h2day >= 1000 and h2day <= 1800)
-            + 2 * (h2day > 1800 and h2day <= 3000)
-            + 3 * (h2day > 3000)
+            node: 1 * (h2day >= 900 and h2day <= 1600)
+            + 2 * (h2day > 1600 and h2day <= 2400)
+            + 3 * (h2day > 2400)
             for (node, h2day) in h2day_demand_nodes.items()
         }
         h2station_nodes = {k: v for k, v in h2station_nodes.items() if v != 0}
