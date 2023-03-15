@@ -6,6 +6,7 @@ from copy import copy
 from collections import Counter, defaultdict
 from utils.visualization import visualize_network_with_stations_size
 from utils.summary_statistics import phase_summary, print_table
+from utils.output_dataframe import df_phase
 
 flux_to_refueling = 0.0012
 fuel_by_refueling = 32  # kg
@@ -22,6 +23,7 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
     base_year = 2025
     station_size_all_phase = []
     summary = []
+    df_all_phase = []
     for i, percentage_of_hydrogen_truck in enumerate(percentage_of_hydrogen_truck_list):
         if i >= timesteps:
             break
@@ -136,7 +138,9 @@ def scenario_1(cn1, x, timesteps=4, visualization=False, metrics=False):
         
         station_size_all_phase.append(dict(cn1.nodes(data='S3P1_station_size')))
         summary.append(call_phase_summary(cn1, station_size_all_phase, base_year + i * 5), )
+        df_all_phase.append(df_phase(cn1, 'S3P1'))
     print_table(summary)   
+    return df_all_phase
 
     #do scenario in the for loop + demand decrease in size with time
     #question on scaling for the last date ?
