@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
 from utils.visualization import visualize_scenario2
+from utils.summary_statistics import phase_summary, print_table
+from utils.output_dataframe import df_phase
 
 flux_to_refueling = 0.0012
 fuel_by_refueling = 32  # kg
@@ -18,6 +20,10 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
     percentage_of_hydrogen_truck_list = [0.04, 0.09, 0.168, 0.24]
     demand_treshold = [150000, 370000, 7500000, 1100000]
     cur_demand_sum = 0
+    base_year = 2025
+    station_size_all_phase = []
+    summary = []
+    df_all_phase = []
     for i, percentage_of_hydrogen_truck in enumerate(percentage_of_hydrogen_truck_list):
         if i >= timesteps:
             break
@@ -105,7 +111,6 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
             res_size[best_node] = h2station_nodes[best_node]
             res_h2day[best_node] = h2day_nodes[best_node]
             res_profit[best_node] = h2profit_nodes[best_node]
-            res_airliquide[best_node] = (random.random() < 0.5)
             cur_demand_sum += h2day_nodes[best_node]
             df_dist = (
                 (df_coor.x - df_coor.loc[best_node, "x"]) ** 2
@@ -131,10 +136,29 @@ def scenario_2(cn1, x, timesteps=4, visualization=False, metrics=False):
             visualize_scenario2(cn1, 'S3P2_')
         if metrics:
             scenario_2_metrics(cn1)
+        station_size_all_phase.append(dict(cn1.nodes(data='S3P2_station_size')))
+        summary.append(call_phase_summary(cn1, station_size_all_phase, base_year + i * 5), )
+        df_all_phase.append(df_phase(cn1, 'S3P2'))
+    print_table(summary)   
+    return df_all_phase
 
     #do scenario in the for loop + demand decrease in size with time
     #question on scaling for the last date ?
-        
+
+def call_phase_summary(cn, station_size_all_phase, phase):
+    station_size = dict(cn.nodes(data='S3P2_station_size'))
+    fulfilled_demand = dict(cn.nodes(data='S3P2_h2day'))
+    profit_ton = dict(cn.nodes(data='S3P2_kg_profit'))
+    operation_rate = 0.97 
+    return phase_summary(
+                                station_size,
+                                fulfilled_demand,
+                                profit_ton,
+                                operation_rate,
+                                station_size_all_phase,
+                                phase
+
+                            )
         
 
 def scenario_2_metrics(roads):
